@@ -67,6 +67,24 @@ def convertir(ingredients, table):
             resultat.append((nom, quantite, unite))
     return resultat
 
+def tableau(ingredients):
+    """Le tableau Markdown des ingrédients, une ligne par ingrédient."""
+    texte = "| Ingrédient | Quantité |\n"
+    texte = texte + "|---|---|\n"
+    for nom, quantite, unite in ingredients:
+        texte = texte + "| " + nom + " | " + str(round(quantite, 1)) + " " + unite + " |\n"
+    return texte
+
+
+def ecrire_markdown(nom, personnes, unites, ingredients):
+    """Le texte de recettes/<nom>.md, avec le tableau des ingrédients sous « ## Ingrédients », écrit dans sortie/ ; renvoie son chemin."""
+    source = (DONNEES / (nom + ".md")).read_text(encoding="utf-8")
+    intitule = "## Ingrédients pour " + str(personnes) + " personnes, en unités " + unites
+    remplacement = intitule + "\n\n" + tableau(ingredients)
+    complete = source.replace("## Ingrédients", remplacement)
+    markdown = SORTIE / (nom + ".md")
+    markdown.write_text(complete, encoding="utf-8")
+    return markdown
 
 # ---- Le programme -------------------------------------------------------------
 
@@ -75,6 +93,7 @@ analyseur = argparse.ArgumentParser(description="Les ingrédients d'une recette 
 analyseur.add_argument("nom", help="la recette : un fichier de recettes/, sans .csv")
 analyseur.add_argument("-p", "--personnes", type=int, default=4, help="nombre de personnes (défaut : 4)")
 analyseur.add_argument("-u", "--unites", choices=("SI", "US"), default="SI", help="système d'unités (défaut : SI)")
+analyseur.add_argument("--page", action="store_true", help="écrit aussi la page de la recette : son texte complété, puis sa page HTML")
 options = analyseur.parse_args()
 NOM = options.nom
 PERSONNES = options.personnes
@@ -96,3 +115,6 @@ SORTIE.mkdir(exist_ok=True)
 fichier = SORTIE / (NOM + "_" + str(PERSONNES) + "_" + UNITES + ".csv")
 ecrire_ingredients(fichier, ingredients)
 print("écrit :", fichier)
+if options.page:
+    markdown = ecrire_markdown(NOM, PERSONNES, UNITES, ingredients)
+    print("écrit :", markdown)
